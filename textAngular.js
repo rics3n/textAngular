@@ -849,6 +849,21 @@ See README.md or https://github.com/fraywing/textAngular/wiki for requirements a
 					throw ('textAngular Error: attempting to update non-editable taBind');
 				};
 
+				var _compileHtmlFromCopyPaste = function(){
+					var sanInput = "";
+					if(_isContentEditable) {
+						sanInput = _sanitize(element[0].innerHTML);
+						element[0].innerHTML = sanInput;
+						return sanInput;
+					}
+					if(_isInputFriendly) {
+						sanInput = _sanitize(element.val());
+						element.val(sanInput);
+						return  sanInput;
+					} 
+					throw ('textAngular Error: attempting to update non-editable taBind');
+				};
+
 				//used for updating when inserting wrapped elements
 				scope.$parent['updateTaBind' + (attrs.id || '')] = function(){
 					if(!_isReadonly) ngModel.$setViewValue(_compileHtml());
@@ -859,7 +874,7 @@ See README.md or https://github.com/fraywing/textAngular/wiki for requirements a
 					element.on('paste cut', function(){
 						// timeout to next is needed as otherwise the paste/cut event has not finished actually changing the display
 						if(!_isReadonly) $timeout(function(){
-							ngModel.$setViewValue(_compileHtml());
+							ngModel.$setViewValue(_compileHtmlFromCopyPaste());
 						}, 0);
 					});
 
