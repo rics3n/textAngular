@@ -31,7 +31,7 @@
   <button ng-click="disabled = !disabled" unselectable>Disable text-angular Toggle</button>
   <div text-angular="text-angular" name="htmlcontent" ng-model="htmlcontent" ta-disabled='disabled'></div>
   <h1>Raw HTML in a text area</h1>
-  <textarea ng-model="htmlcontent" style="width: 100%"></textarea>
+  <textarea ng-model="htmlcontent" style="width: 100%; height: 500px;"></textarea>
   <h1>Bound with ng-bind-html</h1>
   <div ng-bind-html="htmlcontent"></div>
   <h1>Bound with ta-bind, our internal html-binding directive</h1>
@@ -49,8 +49,8 @@
   
 </div>
   <script src='https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js'></script>
-  <script src='http://cdnjs.cloudflare.com/ajax/libs/textAngular/1.2.0/textAngular-sanitize.min.js'></script>
-  <script src='http://cdnjs.cloudflare.com/ajax/libs/textAngular/1.2.0/textAngular.min.js'></script>
+  <script src='../textAngular-sanitize.js'></script>
+  <script src='../textAngular.js'></script>
 
   <script type="text/javascript">
 	angular.module("textAngularTest", ['textAngular']);

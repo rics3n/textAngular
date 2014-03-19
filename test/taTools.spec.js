@@ -298,7 +298,7 @@ describe('taTools test tool actions', function(){
 			sel.setSingleRange(range);
 			sel.refresh();
 			findAndTriggerButton('clear');
-			expect($rootScope.htmlcontent).toBe('<p class="test-class" style="text-align: left;">Test Content <b>that</b> <u>should</u> be cleared</p><h1>Test Other Tags</h1><ul><li>Test 1</li><li>Test 2</li></ul>');
+			expect($rootScope.htmlcontent).toBe('<p>Test Content <b>that</b> <u>should</u> be cleared</p><h1>Test Other Tags</h1><ul><li>Test 1</li><li>Test 2</li></ul>');
 		});
 		
 		it('doesn\'t clear wholly selected list elements, but clears them of formatting', function(){
@@ -308,7 +308,7 @@ describe('taTools test tool actions', function(){
 			sel.setSingleRange(range);
 			sel.refresh();
 			findAndTriggerButton('clear');
-			expect($rootScope.htmlcontent).toBe('<p class="test-class" style="text-align: left;">Test Content <b>that</b> <u>should</u> be cleared</p><h1>Test Other Tags</h1><ul><li>Test 1</li><li>Test 2</li></ul>');
+			expect($rootScope.htmlcontent).toBe('<p>Test Content <b>that</b> <u>should</u> be cleared</p><h1>Test Other Tags</h1><ul><li>Test 1</li><li>Test 2</li></ul>');
 		});
 		
 		it('doesn\'t clear singly selected list elements, but clears them of formatting', function(){
@@ -319,7 +319,7 @@ describe('taTools test tool actions', function(){
 			sel.setSingleRange(range);
 			sel.refresh();
 			findAndTriggerButton('clear');
-			expect($rootScope.htmlcontent).toBe('<p class="test-class" style="text-align: left;">Test Content <b>that</b> <u>should</u> be cleared</p><h1>Test Other Tags</h1><ul><li>Test 1</li><li>Test 2</li></ul>');
+			expect($rootScope.htmlcontent).toBe('<p>Test Content <b>that</b> <u>should</u> be cleared</p><h1>Test Other Tags</h1><ul><li>Test 1</li><li>Test 2</li></ul>');
 		});
 		
 		it('doesn\'t clear singly selected list elements, but clears them of formatting', function(){
@@ -330,7 +330,7 @@ describe('taTools test tool actions', function(){
 			sel.setSingleRange(range);
 			sel.refresh();
 			findAndTriggerButton('clear');
-			expect($rootScope.htmlcontent).toBe('<p class="test-class" style="text-align: left;">Test Content <b>that</b> <u>should</u> be cleared</p><h1>Test Other Tags</h1><ul><li>Test 1</li><li>Test 2</li></ul>');
+			expect($rootScope.htmlcontent).toBe('<p>Test Content <b>that</b> <u>should</u> be cleared</p><h1>Test Other Tags</h1><ul><li>Test 1</li><li>Test 2</li></ul>');
 		});
 		
 		it('works without rangy', function(){
@@ -340,7 +340,7 @@ describe('taTools test tool actions', function(){
 			button.scope().executeAction(editorScope);
 			editorScope.endAction();
 			$rootScope.$digest();
-			expect($rootScope.htmlcontent).toBe('<p class="test-class">Test Content that should be cleared</p><p>Test Other Tags</p><ul><li>Test 1</li></ul><ul><li>Test 2</li></ul><p></p>');
+			expect($rootScope.htmlcontent).toBe('<p>Test Content that should be cleared</p><p>Test Other Tags</p><ul><li>Test 1</li></ul><ul><li>Test 2</li></ul><p></p>');
 			button.scope().$window.rangy = _rangy;
 		});
 	});

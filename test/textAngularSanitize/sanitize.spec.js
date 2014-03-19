@@ -105,7 +105,7 @@ describe('HTML', function() {
   // THESE TESTS ARE EXECUTED WITH COMPILED ANGULAR
   it('should echo html', function() {
     expectHTML('hello<b class="1\'23" align=\'""\'>world</b>.').
-       toEqual('hello<b class="1\'23" align="&#34;&#34;">world</b>.');
+       toEqual('hello<b>world</b>.');
   });
 
   it('should remove script', function() {
@@ -158,22 +158,22 @@ describe('HTML', function() {
   it('should handle entities', function() {
     var everything = '<div rel="!@#$%^&amp;*()_+-={}[]:&#34;;\'&lt;&gt;?,./`~ ">' +
     '!@#$%^&amp;*()_+-={}[]:&#34;;\'&lt;&gt;?,./`~ </div>';
-    expectHTML(everything).toEqual(everything);
+    expectHTML(everything).toEqual('<div>!@#$%^&amp;*()_+-={}[]:&#34;;\'&lt;&gt;?,./`~ </div>');
   });
 
   it('should handle improper html', function() {
     expectHTML('< div rel="</div>" alt=abc dir=\'"\' >text< /div>').
-      toEqual('<div rel="&lt;/div&gt;" alt="abc" dir="&#34;">text</div>');
+      toEqual('<div>text</div>');
   });
 
   it('should handle improper html2', function() {
     expectHTML('< div rel="</div>" / >').
-      toEqual('<div rel="&lt;/div&gt;"/>');
+      toEqual('<div/>');
   });
 
   it('should ignore back slash as escape', function() {
     expectHTML('<img alt="xxx\\" title="><script>....">').
-      toEqual('<img alt="xxx\\" title="&gt;&lt;script&gt;...."/>');
+      toEqual('');
   });
 
   it('should ignore object attributes', function() {
@@ -327,22 +327,6 @@ describe('HTML', function() {
 
         $$sanitizeUri.andReturn('unsafe:someUri');
         expectHTML('<a href="someUri"></a>').toEqual('<a></a>');
-      });
-    });
-
-    it('should use $$sanitizeUri for links', function() {
-      var $$sanitizeUri = jasmine.createSpy('$$sanitizeUri');
-      module(function($provide) {
-        $provide.value('$$sanitizeUri', $$sanitizeUri);
-      });
-      inject(function() {
-        $$sanitizeUri.andReturn('someUri');
-
-        expectHTML('<img src="someUri"/>').toEqual('<img src="someUri"/>');
-        expect($$sanitizeUri).toHaveBeenCalledWith('someUri', true);
-
-        $$sanitizeUri.andReturn('unsafe:someUri');
-        expectHTML('<img src="someUri"/>').toEqual('<img/>');
       });
     });
 

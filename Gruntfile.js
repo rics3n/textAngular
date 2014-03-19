@@ -30,10 +30,10 @@ module.exports = function (grunt) {
 			  'functions': 100
 			},*/
 			thresholds: {
-			  'statements': -14,
-			  'branches': -18,
-			  'lines': 100,
-			  'functions': -2
+			  'statements': -18,
+			  'branches': -21,
+			  'lines': 99,
+			  'functions': -3
 			},
 			dir: ''
 		  }
