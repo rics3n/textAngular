@@ -28,12 +28,12 @@ describe('taSanitize', function(){
 		
 		describe('un-validated are removed', function(){
 			it('removes non whitelisted values', inject(function(taSanitize){
-				var result = taSanitize('<div style="height: 12px;"></div>');
+				var result = taSanitize('<div style="max-height: 12px;"></div>');
 				expect(result).toBe('<div></div>');
 			}));
 			it('removes non whitelisted values leaving valid values', inject(function(taSanitize){
-				var result = taSanitize('<div style="text-align: left; height: 12px;"></div>');
-				expect(result).toBe('<div></div>');
+				var result = angular.element(taSanitize('<div style="text-align: left; max-height: 12px;"></div>'));
+				expect(result.attr('style')).toBe('text-align: left;');
 			}));
 		});
 	});

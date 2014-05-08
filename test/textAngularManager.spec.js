@@ -53,8 +53,8 @@ describe('textAngularManager', function(){
 			}));
 			beforeEach(inject(function (_$compile_, _$rootScope_) {
 				$rootScope = _$rootScope_;
-				toolbar1 = _$compile_('<text-angular-toolbar name="test1"></text-angular-toolbar>')($rootScope);
-				toolbar2 = _$compile_('<text-angular-toolbar name="test2"></text-angular-toolbar>')($rootScope);
+				toolbar1 = jQuery(_$compile_('<text-angular-toolbar name="test1"></text-angular-toolbar>')($rootScope)[0]);
+				toolbar2 = jQuery(_$compile_('<text-angular-toolbar name="test2"></text-angular-toolbar>')($rootScope)[0]);
 				$rootScope.$digest();
 			}));
 			
@@ -111,6 +111,34 @@ describe('textAngularManager', function(){
 					textAngularManager.resetToolsDisplay();
 					expect(jQuery('[name="h1"] i.test-icon-class, [name="h2"] i.test-icon-class2', toolbar1).length).toBe(0);
 					expect(jQuery('[name="h1"] i.test-icon-class, [name="h2"] i.test-icon-class2', toolbar2).length).toBe(0);
+				});
+			});
+			
+			describe('dynamically add tool', function(){
+				it('to all toolbars', function(){
+					textAngularManager.addTool('newtool', {buttontext: 'Test Add Tool'}, 0, 0);
+					expect(toolbar1.find('[name="newtool"]').length).toBe(1);
+					expect(toolbar2.find('[name="newtool"]').length).toBe(1);
+				});
+				it('specifically to one toolbar', function(){
+					textAngularManager.addToolToToolbar('newtool', {buttontext: 'Test Add Tool'}, 'test1', 0, 0);
+					expect(toolbar1.find('[name="newtool"]').length).toBe(1);
+					expect(toolbar2.find('[name="newtool"]').length).toBe(0);
+				});
+			});
+			
+			describe('dynamically remove tool', function(){
+				it('from all toolbars', function(){
+					textAngularManager.addTool('newtool', {buttontext: 'Test Add Tool'}, 0, 0);
+					textAngularManager.removeTool('newtool');
+					expect(toolbar1.find('[name="newtool"]').length).toBe(0);
+					expect(toolbar2.find('[name="newtool"]').length).toBe(0);
+				});
+				it('when only on one toolbar', function(){
+					textAngularManager.addToolToToolbar('newtool', {buttontext: 'Test Add Tool'}, 'test1', 0, 0);
+					textAngularManager.removeTool('newtool');
+					expect(toolbar1.find('[name="newtool"]').length).toBe(0);
+					expect(toolbar2.find('[name="newtool"]').length).toBe(0);
 				});
 			});
 		});
@@ -274,7 +302,33 @@ describe('textAngularManager', function(){
 							return this.$element.attr('hit-this', 'true');
 						},
 						onElementSelect: {
-							element: 'a',
+							element: 'i',
+							action: function(event, element, editorScope){
+								return this.$element.attr('hit-this', 'true');
+							}
+						}
+					});
+					taRegisterTool('onselectattr', {
+						buttontext: 'Active on element with attr select',
+						action: function(){
+							return this.$element.attr('hit-this', 'true');
+						},
+						onElementSelect: {
+							element: 'i',
+							onlyWithAttrs: ['src'],
+							action: function(event, element, editorScope){
+								return this.$element.attr('hit-this', 'true');
+							}
+						}
+					});
+					taRegisterTool('onselectattr_specific', {
+						buttontext: 'Active on element select',
+						action: function(){
+							return this.$element.attr('hit-this', 'true');
+						},
+						onElementSelect: {
+							element: 'i',
+							onlyWithAttrs: ['src','href'],
 							action: function(event, element, editorScope){
 								return this.$element.attr('hit-this', 'true');
 							}
@@ -287,15 +341,15 @@ describe('textAngularManager', function(){
 						},
 						commandKeyCode: 42,
 						onElementSelect: {
-							element: 'a',
+							element: 'b',
 							action: function(event, element, editorScope){
 								throw('Error Should Not Run');
 							}
 						}
 					});
-					taOptions.toolbar = [['noactivestate','activeonrangyrange','inactiveonrangyrange','onselect']];
+					taOptions.toolbar = [['noactivestate','activeonrangyrange','inactiveonrangyrange','onselect','onselectattr','onselectattr_specific']];
 					$rootScope = _$rootScope_;
-					element = _$compile_('<text-angular name="test"><p>Test Content</p></text-angular>')($rootScope);
+					element = jQuery(_$compile_('<text-angular name="test"><p>Test Content</p></text-angular>')($rootScope)[0]);
 					$rootScope.$digest();
 					editorScope = textAngularManager.retrieveEditor('test');
 				}));
@@ -353,18 +407,39 @@ describe('textAngularManager', function(){
 				describe('onElementSelect', function(){
 					it('should do nothing if button not added', function(){
 						expect(function(){
-							editorScope.editorFunctions.triggerElementSelect({}, '<a>');
+							editorScope.editorFunctions.triggerElementSelect({}, '<b>');
 						}).not.toThrow();
 					});
 					
 					it('should return true if there is a relevant select element on a tool', function(){
-						expect(editorScope.editorFunctions.triggerElementSelect({}, '<a>')).toBe(true);
+						expect(editorScope.editorFunctions.triggerElementSelect({}, '<i>')).toBe(true);
 					});
 					
 					it('should call the onElementSelect.action handler of defined tools', function(){
-						editorScope.editorFunctions.triggerElementSelect({}, '<a>');
+						editorScope.editorFunctions.triggerElementSelect({}, '<i>');
 						$rootScope.$digest();
 						expect(element.find('.ta-toolbar button[name=onselect]').attr('hit-this')).toBe('true');
+					});
+					
+					it('should call the onElementSelect.action handler of defined tools with attr', function(){
+						editorScope.editorFunctions.triggerElementSelect({}, '<i src="test">');
+						$rootScope.$digest();
+						expect(element.find('.ta-toolbar button[name=onselect]').attr('hit-this')).toBeUndefined();
+						expect(element.find('.ta-toolbar button[name=onselectattr]').attr('hit-this')).toBe('true');
+					});
+					
+					it('should call only the most specific handler when ambigious', function(){
+						editorScope.editorFunctions.triggerElementSelect({}, '<i src="test" href="test">');
+						$rootScope.$digest();
+						expect(element.find('.ta-toolbar button[name=onselectattr_specific]').attr('hit-this')).toBe('true');
+						expect(element.find('.ta-toolbar button[name=onselectattr]').attr('hit-this')).toBeUndefined();
+					});
+					
+					it('should not call more specific', function(){
+						editorScope.editorFunctions.triggerElementSelect({}, '<i src="test">');
+						$rootScope.$digest();
+						expect(element.find('.ta-toolbar button[name=onselectattr_specific]').attr('hit-this')).toBeUndefined();
+						expect(element.find('.ta-toolbar button[name=onselectattr]').attr('hit-this')).toBe('true');
 					});
 				});
 			});
@@ -397,7 +472,7 @@ describe('textAngularManager', function(){
 				expect(function(){textAngularManager.refreshEditor('non-editor');}).toThrow('textAngular Error: No Editor with name "non-editor" exists');
 			}));
 			it('should update from text view to model', inject(function(textAngularManager){
-				jQuery('.ta-text', element).append('<div>Test 2 Content</div>');
+				jQuery('.ta-text .ta-bind', element[0]).append('<div>Test 2 Content</div>');
 				textAngularManager.refreshEditor('test');
 				expect($rootScope.htmlcontent).toBe('<p>Test Content</p><div>Test 2 Content</div>');
 			}));

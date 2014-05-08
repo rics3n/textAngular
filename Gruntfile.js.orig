@@ -29,6 +29,15 @@ module.exports = function (grunt) {
 			  'branches': 100,
 			  'lines': 100,
 			  'functions': 100
+<<<<<<< HEAD
+			},*/
+			thresholds: {
+			  'statements': -22,
+			  'branches': -23,
+			  'lines': 98,
+			  'functions': -3
+=======
+>>>>>>> upstream/master
 			},
 			dir: ''
 		  }

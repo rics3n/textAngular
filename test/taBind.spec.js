@@ -2,12 +2,18 @@ describe('taBind', function () {
 	'use strict';
 	beforeEach(module('textAngular'));
 	var $rootScope;
-
-	it('should require ngModel', inject(function (_$compile_, _$rootScope_) {
+	
+	it('should require ngModel', inject(function ($compile, $rootScope) {
 		expect(function () {
-			_$compile_('<div ta-bind></div>')(_$rootScope_);
+			$compile('<div ta-bind></div>')($rootScope);
 			$rootScope.$digest();
 		}).toThrow();
+	}));
+	
+	it('should add ta-bind class', inject(function ($compile, $rootScope) {
+		var element = $compile('<div ta-bind ng-model="test"></div>')($rootScope);
+		$rootScope.$digest();
+		expect(element.attr('class')).toBe('ng-scope ng-isolate-scope ng-pristine ng-valid ta-bind');
 	}));
 
 	describe('should respect HTML5 placeholder', function () {
@@ -25,10 +31,10 @@ describe('taBind', function () {
 				$rootScope.html = '';
 				var element = $compile('<div ta-bind id="test" contenteditable="true" ng-model="html" placeholder="Add Comment"></div>')($rootScope);
 				$rootScope.$digest();
-				expect(document.styleSheets[1].rules.length).toBe(1);
+				expect(document.styleSheets[2].rules.length).toBe(1);
 				element.scope().$destroy();
 				$rootScope.$digest();
-				expect(document.styleSheets[1].rules.length).toBe(0);
+				expect(document.styleSheets[2].rules.length).toBe(0);
 			}));
 		});
 		
@@ -216,7 +222,139 @@ describe('taBind', function () {
 			element.find('a').on('click', function(e){
 				expect(e.isDefaultPrevented());
 			});
-			element.find('a').triggerHandler('click');
+			jQuery(element.find('a')[0]).trigger('click');
+		});
+		
+		describe('should respect the ta-default-wrap value', function(){
+			describe('on focus', function(){
+				it('default to p element', inject(function($rootScope, $compile){
+					$rootScope.html = '';
+					element = $compile('<div ta-bind contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$rootScope.$digest();
+					element.triggerHandler('focus');
+					$rootScope.$digest();
+					expect(element.html()).toBe('<p><br></p>');
+				}));
+				it('set to other value', inject(function($rootScope, $compile){
+					$rootScope.html = '';
+					element = $compile('<div ta-bind ta-default-wrap="div" contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$rootScope.$digest();
+					element.triggerHandler('focus');
+					$rootScope.$digest();
+					expect(element.html()).toBe('<div><br></div>');
+				}));
+				it('set to blank should not wrap', inject(function($rootScope, $compile){
+					$rootScope.html = '';
+					element = $compile('<div ta-bind ta-default-wrap="" contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$rootScope.$digest();
+					element.triggerHandler('focus');
+					$rootScope.$digest();
+					expect(element.html()).toBe('');
+				}));
+			});
+			describe('on keyup', function(){
+				it('default to p element', inject(function($rootScope, $compile){
+					$rootScope.html = '';
+					element = $compile('<div ta-bind contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$rootScope.$digest();
+					element.triggerHandler('keyup');
+					$rootScope.$digest();
+					expect(element.html()).toBe('<p><br></p>');
+				}));
+				it('set to other value', inject(function($rootScope, $compile){
+					$rootScope.html = '';
+					element = $compile('<div ta-bind ta-default-wrap="div" contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$rootScope.$digest();
+					element.triggerHandler('keyup');
+					$rootScope.$digest();
+					expect(element.html()).toBe('<div><br></div>');
+				}));
+				it('set to blank should not wrap', inject(function($rootScope, $compile){
+					$rootScope.html = '';
+					element = $compile('<div ta-bind ta-default-wrap="" contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$rootScope.$digest();
+					element.triggerHandler('keyup');
+					$rootScope.$digest();
+					expect(element.html()).toBe('');
+				}));
+			});
+			describe('on enter press', function(){
+				it('replace inserted with default wrap', inject(function($rootScope, $compile, $window, $document){
+					$rootScope.html = '<p><br></p>';
+					element = $compile('<div ta-bind ta-default-wrap="b" contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$document.find('body').append(element);
+					$rootScope.$digest();
+					var range = $window.rangy.createRangyRange();
+					range.selectNodeContents(element.children()[0]);
+					$window.rangy.getSelection().setSingleRange(range);
+					var event;
+					if(angular.element === jQuery){
+						event = jQuery.Event('keyup');
+						event.keyCode = 13;
+						element.triggerHandler(event);
+					}else{
+						event = {keyCode: 13};
+						element.triggerHandler('keyup', event);
+					}
+					$rootScope.$digest();
+					expect(element.html()).toBe('<b><br></b>');
+					element.remove();
+				}));
+				it('NOT replace inserted with default wrap when shift', inject(function($rootScope, $compile, $window, $document){
+					$rootScope.html = '<p><br></p>';
+					element = $compile('<div ta-bind ta-default-wrap="b" contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$document.find('body').append(element);
+					$rootScope.$digest();
+					var range = $window.rangy.createRangyRange();
+					range.selectNodeContents(element.children()[0]);
+					$window.rangy.getSelection().setSingleRange(range);
+					var event;
+					if(angular.element === jQuery){
+						event = jQuery.Event('keyup');
+						event.keyCode = 13;
+						event.shiftKey = true;
+						element.triggerHandler(event);
+					}else{
+						event = {keyCode: 13, shiftKey: true};
+						element.triggerHandler('keyup', event);
+					}
+					$rootScope.$digest();
+					expect(element.html()).toBe('<p><br></p>');
+					element.remove();
+				}));
+				it('NOT replace inserted with default wrap when a li', inject(function($rootScope, $compile, $window, $document){
+					$rootScope.html = '<li><br></li>';
+					element = $compile('<div ta-bind ta-default-wrap="b" contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$document.find('body').append(element);
+					$rootScope.$digest();
+					var range = $window.rangy.createRangyRange();
+					range.selectNodeContents(element.children()[0]);
+					$window.rangy.getSelection().setSingleRange(range);
+					var event;
+					if(angular.element === jQuery){
+						event = jQuery.Event('keyup');
+						event.keyCode = 13;
+						element.triggerHandler(event);
+					}else{
+						event = {keyCode: 13};
+						element.triggerHandler('keyup', event);
+					}
+					$rootScope.$digest();
+					expect(element.html()).toBe('<li><br></li>');
+					element.remove();
+				}));
+				it('should replace inserted with default wrap when empty', inject(function($rootScope, $compile, $window, $document){
+					$rootScope.html = '<p><br></p>';
+					element = $compile('<div ta-bind ta-default-wrap="b" contenteditable="contenteditable" ng-model="html"></div>')($rootScope);
+					$document.find('body').append(element);
+					$rootScope.$digest();
+					element[0].innerHTML = '';
+					element.triggerHandler('keyup');
+					$rootScope.$digest();
+					expect(element.html()).toBe('<b><br></b>');
+					element.remove();
+				}));
+			});
 		});
 	});
 
@@ -234,7 +372,7 @@ describe('taBind', function () {
 		});
 		it('should update model from change', function () {
 			element.val('<div>Test 2 Content</div>');
-			element.trigger('blur');
+			element.triggerHandler('blur');
 			$rootScope.$digest();
 			expect($rootScope.html).toBe('<div>Test 2 Content</div>');
 		});
@@ -265,7 +403,7 @@ describe('taBind', function () {
 		});
 		it('should update model from change', function () {
 			element.val('<div>Test 2 Content</div>');
-			element.trigger('blur');
+			element.triggerHandler('blur');
 			$rootScope.$digest();
 			expect($rootScope.html).toBe('<div>Test 2 Content</div>');
 		});
@@ -283,30 +421,149 @@ describe('taBind', function () {
 	});
 
 	describe('should update from cut and paste events', function () {
-		var $rootScope, element, $timeout;
-		beforeEach(inject(function (_$compile_, _$rootScope_, _$timeout_) {
-			$rootScope = _$rootScope_;
-			$timeout = _$timeout_;
-			$rootScope.html = '<p>Test Contents</p>';
-			element = _$compile_('<textarea ta-bind ng-model="html"></textarea>')($rootScope);
-			$rootScope.$digest();
-		}));
+		describe('on non-contenteditable', function(){
+			var $rootScope, element, $timeout;
+			beforeEach(inject(function (_$compile_, _$rootScope_, _$timeout_) {
+				$rootScope = _$rootScope_;
+				$timeout = _$timeout_;
+				$rootScope.html = '<p>Test Contents</p>';
+				element = _$compile_('<textarea ta-bind ng-model="html"></textarea>')($rootScope);
+				$rootScope.$digest();
+			}));
+	
+			it('should update model from paste', function () {
+				element.val('<div>Test 2 Content</div>');
+				element.triggerHandler('paste');
+				$rootScope.$digest();
+				$timeout.flush();
+				$rootScope.$digest();
+				expect($rootScope.html).toBe('<div>Test 2 Content</div>');				
+			});
 
-		it('should update model from paste', function () {
-			element.val('<div>Test 2 Content</div>');
-			element.trigger('paste');
-			$rootScope.$digest();
-			$timeout.flush();
-			$rootScope.$digest();
-			expect($rootScope.html).toBe('<div>Test 2 Content</div>');
+			it('should update model from paste with ie code', function () {
+				element.val('<div>Test 2 Content</div>');
+				element.triggerHandler('paste');
+				$rootScope.$digest();
+				$timeout.flush();
+				$rootScope.$digest();
+				expect($rootScope.html).toBe('<div>Test 2 Content</div>');
+			});
+	
+			it('should update model from cut', function () {
+				element.val('<div>Test 2 Content</div>');
+				element.triggerHandler('cut');
+				$timeout.flush();
+				$rootScope.$digest();
+				expect($rootScope.html).toBe('<div>Test 2 Content</div>');
+			});
 		});
-
-		it('should update model from cut', function () {
-			element.val('<div>Test 2 Content</div>');
-			element.trigger('cut');
-			$timeout.flush();
-			$rootScope.$digest();
-			expect($rootScope.html).toBe('<div>Test 2 Content</div>');
+		
+		describe('on content-editable', function () {
+			var $rootScope, element, $timeout;
+			beforeEach(inject(function (_$compile_, _$rootScope_, _$timeout_, $document, $window) {
+				$rootScope = _$rootScope_;
+				$timeout = _$timeout_;
+				$rootScope.html = '<p>Test Contents</p>';
+				element = _$compile_('<div contenteditable="true" ta-bind ng-model="html"></div>')($rootScope);
+				$document.find('body').append(element);
+				$rootScope.$digest();
+				var sel = $window.rangy.getSelection();
+				var range = $window.rangy.createRangyRange();
+				range.selectNodeContents(element.find('p')[0]);
+				sel.setSingleRange(range);
+			}));
+			afterEach(function(){
+				element.remove();
+			});
+			
+			// var text = (e.originalEvent || e).clipboardData.getData('text/plain') || $window.clipboardData.getData('Text');
+			describe('should update model from paste', function () {
+				it('ie based', inject(function($window){
+					var content = 'Test 2 Content';
+					var ok = false;
+					$window.clipboardData = {
+						getData: function(){ return content; }
+					};
+					document.selection = {
+						createRange: function() {
+							return {
+								pasteHTML: function(text){
+									ok = text === content;
+								}
+							};
+						}
+					};
+					element.triggerHandler('paste');
+					$rootScope.$digest();
+					expect(ok).toBe(true);
+					$window.clipboardData = undefined;
+					document.selection = undefined;
+				}));
+				
+				it('non-ie based w/o jquery', inject(function($window){
+					element.triggerHandler('paste', {clipboardData: {getData: function(){ return 'Test 3 Content'; }}});
+					$rootScope.$digest();
+					expect($rootScope.html).toBe('<p>Test 3 Content</p>');
+				}));
+				
+				it('non-ie based w/ jquery', inject(function($window){
+					element.triggerHandler('paste', {originalEvent: {clipboardData: {getData: function(){ return 'Test 3 Content'; } }}});
+					$rootScope.$digest();
+					expect($rootScope.html).toBe('<p>Test 3 Content</p>');
+				}));
+				
+				it('non-ie based w/o paste content', inject(function($window){
+					element.triggerHandler('paste');
+					$rootScope.$digest();
+					expect($rootScope.html).toBe('<p>Test Contents</p>');
+				}));
+			});
+	
+			it('should update model from cut', function () {
+				element.html('<div>Test 2 Content</div>');
+				element.triggerHandler('cut');
+				$timeout.flush();
+				$rootScope.$digest();
+				expect($rootScope.html).toBe('<div>Test 2 Content</div>');
+			});
+		});
+		
+		describe('on content-editable with readonly', function () {
+			var $rootScope, element, $timeout;
+			beforeEach(inject(function (_$compile_, _$rootScope_, _$timeout_, $document, $window) {
+				$rootScope = _$rootScope_;
+				$timeout = _$timeout_;
+				$rootScope.html = '<p>Test Contents</p>';
+				element = _$compile_('<div contenteditable="true" ta-readonly="true" ta-bind ng-model="html"></div>')($rootScope);
+				$document.find('body').append(element);
+				$rootScope.$digest();
+				var sel = $window.rangy.getSelection();
+				var range = $window.rangy.createRangyRange();
+				range.selectNodeContents(element.find('p')[0]);
+				sel.setSingleRange(range);
+			}));
+			afterEach(function(){
+				element.remove();
+			});
+			
+			// var text = (e.originalEvent || e).clipboardData.getData('text/plain') || $window.clipboardData.getData('Text');
+			describe('should not update model from paste', function () {
+				it('ie based', inject(function($window){
+					$window.clipboardData = {
+						getData: function(){ return 'Test 2 Content'; }
+					};
+					element.triggerHandler('paste');
+					$rootScope.$digest();
+					expect($rootScope.html).toBe('<p>Test Contents</p>');
+					$window.clipboardData = undefined;
+				}));
+				
+				it('non-ie based', inject(function($window){
+					element.triggerHandler('paste', {clipboardData: {getData: function(){ return 'Test 3 Content'; }}});
+					$rootScope.$digest();
+					expect($rootScope.html).toBe('<p>Test Contents</p>');
+				}));
+			});
 		});
 	});
 	
@@ -470,7 +727,7 @@ describe('taBind', function () {
 			}));
 		});
 	});
-
+	
 	describe('should use taSanitize to', function () {
 		var $rootScope, element;
 		beforeEach(inject(function (_$compile_, _$rootScope_) {
@@ -650,14 +907,14 @@ describe('taBind', function () {
 
 					it('should update model from paste', function () {
 						element.val('<div>Test 2 Content</div>');
-						element.trigger('paste');
+						element.triggerHandler('paste');
 						$rootScope.$digest();
 						expect($rootScope.html).toBe('<p>Test Contents</p>');
 					});
 
 					it('should update model from cut', function () {
 						element.val('<div>Test 2 Content</div>');
-						element.trigger('cut');
+						element.triggerHandler('cut');
 						$rootScope.$digest();
 						expect($rootScope.html).toBe('<p>Test Contents</p>');
 					});
@@ -675,14 +932,14 @@ describe('taBind', function () {
 
 					it('should update model from paste', function () {
 						element.val('<div>Test 2 Content</div>');
-						element.trigger('paste');
+						element.triggerHandler('paste');
 						$rootScope.$digest();
 						expect($rootScope.html).toBe('<p>Test Contents</p>');
 					});
 
 					it('should update model from cut', function () {
 						element.val('<div>Test 2 Content</div>');
-						element.trigger('cut');
+						element.triggerHandler('cut');
 						$rootScope.$digest();
 						expect($rootScope.html).toBe('<p>Test Contents</p>');
 					});
@@ -700,14 +957,14 @@ describe('taBind', function () {
 
 					it('should update model from paste', function () {
 						element.html('<div>Test 2 Content</div>');
-						element.trigger('paste');
+						element.triggerHandler('paste');
 						$rootScope.$digest();
 						expect($rootScope.html).toBe('<p>Test Contents</p>');
 					});
 
 					it('should update model from cut', function () {
 						element.html('<div>Test 2 Content</div>');
-						element.trigger('cut');
+						element.triggerHandler('cut');
 						$rootScope.$digest();
 						expect($rootScope.html).toBe('<p>Test Contents</p>');
 					});
@@ -783,7 +1040,7 @@ describe('taBind', function () {
 
 					it('should update model', function () {
 						element.val('<div>Test 2 Content</div>');
-						element.trigger('blur');
+						element.triggerHandler('blur');
 						$rootScope.$digest();
 						expect($rootScope.html).toBe('<p>Test Contents</p>');
 					});
@@ -801,7 +1058,7 @@ describe('taBind', function () {
 
 					it('should update model', function () {
 						element.val('<div>Test 2 Content</div>');
-						element.trigger('blur');
+						element.triggerHandler('blur');
 						$rootScope.$digest();
 						expect($rootScope.html).toBe('<p>Test Contents</p>');
 					});
@@ -821,12 +1078,85 @@ describe('taBind', function () {
 
 					it('should update model', function () {
 						element.html('<div>Test 2 Content</div>');
-						element.trigger('keyup');
+						element.triggerHandler('keyup');
 						$rootScope.$digest();
 						expect($rootScope.html).toBe('<p>Test Contents</p>');
 					});
 				});
 			});
+		});
+	});
+	
+	
+	
+	describe('custom renderers', function () {
+		describe('function in display mode', function () {
+			beforeEach(inject(function(taCustomRenderers){
+				taCustomRenderers.push({
+					// Parse back out: '<div class="ta-insert-video" ta-insert-video src="' + urlLink + '" allowfullscreen="true" width="300" frameborder="0" height="250"></div>'
+					// To correct video element. For now only support youtube
+					selector: 'a',
+					renderLogic: function(_element){
+						_element.replaceWith(angular.element('<b></b>'));
+					}
+				});
+				taCustomRenderers.push({
+					// Parse back out: '<div class="ta-insert-video" ta-insert-video src="' + urlLink + '" allowfullscreen="true" width="300" frameborder="0" height="250"></div>'
+					// To correct video element. For now only support youtube
+					customAttribute: 'href',
+					renderLogic: function(_element){
+						_element.replaceWith(angular.element('<i></i>'));
+					}
+				});
+			}));
+			
+			afterEach(inject(function(taCustomRenderers){
+				taCustomRenderers.pop();
+				taCustomRenderers.pop();
+			}));
+			
+			it('should replace with custom code for video renderer', inject(function ($compile, $rootScope) {
+				$rootScope.html = '<p><img class="ta-insert-video" ta-insert-video="http://www.youtube.com/embed/2maA1-mvicY" src="" allowfullscreen="true" width="300" frameborder="0" height="250"/></p>';
+				var element = $compile('<div ta-bind ng-model="html"></div>')($rootScope);
+				$rootScope.$digest();
+				expect(element.find('img').length).toBe(0);
+				expect(element.find('iframe').length).toBe(1);
+			}));
+			
+			it('should not replace with custom code for normal img', inject(function ($compile, $rootScope) {
+				$rootScope.html = '<p><img src=""/></p>';
+				var element = $compile('<div ta-bind ng-model="html"></div>')($rootScope);
+				$rootScope.$digest();
+				expect(element.find('img').length).toBe(1);
+				expect(element.find('iframe').length).toBe(0);
+			}));
+			
+			it('should replace for selector only', inject(function ($compile, $rootScope) {
+				$rootScope.html = '<p><a></a></p>';
+				var element = $compile('<div ta-bind ng-model="html"></div>')($rootScope);
+				$rootScope.$digest();
+				expect(element.find('a').length).toBe(0);
+				expect(element.find('b').length).toBe(1);
+			}));
+			
+			it('should replace for attribute only', inject(function ($compile, $rootScope) {
+				$rootScope.html = '<p><span href></span><b href></b></p>';
+				var element = $compile('<div ta-bind ng-model="html"></div>')($rootScope);
+				$rootScope.$digest();
+				expect(element.find('span').length).toBe(0);
+				expect(element.find('b').length).toBe(0);
+				expect(element.find('i').length).toBe(2);
+			}));
+		});
+		
+		describe('not function in edit mode', function () {
+			it('should exist', inject(function ($compile, $rootScope) {
+				$rootScope.html = '<p><img class="ta-insert-video" ta-insert-video="http://www.youtube.com/embed/2maA1-mvicY" src="" allowfullscreen="true" width="300" frameborder="0" height="250"/></p>';
+				var element = $compile('<div ta-bind contenteditable="true" ng-model="html"></div>')($rootScope);
+				$rootScope.$digest();
+				expect(element.find('img').length).toBe(1);
+				expect(element.find('iframe').length).toBe(0);
+			}));
 		});
 	});
 });
